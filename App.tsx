@@ -16,7 +16,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-
+import CustomIcon from './src/components/CustomIcon';
 import {
   Colors,
   DebugInstructions,
