@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   FlatList,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 import {colors, spacing} from '../themes/theme';
 import InputHeader from '../components/InputHeader';
@@ -24,6 +25,7 @@ import {
 } from '../api/APICall';
 import CategoryHeader from '../components/CategoryHeader';
 import SubMovieCard from '../components/SubMovieCard';
+import MovieCard from '../components/MovieCard';
 
 const {width, height} = Dimensions.get('window');
 
@@ -66,19 +68,21 @@ const HomeScreen = ({navigation}: any) => {
   useEffect(() => {
     (async () => {
       const tempNowPlaying = await getNowPlayingMoviesList();
-      setNowPlayingList(tempNowPlaying.results);
-    })();
+      setNowPlayingList([
+        {id: 'dummy1'},
+        ...tempNowPlaying.results,
+        {id: 'dummy2'},
+      ]);
 
-    (async () => {
       const tempUpcomingMovies = await getUpcomingMoviesList();
       setUpcomingMoviesList(tempUpcomingMovies.results);
-    })();
 
-    (async () => {
       const tempPopularMovies = await getPopularMoviesList();
       setPopularMoviesList(tempPopularMovies.results);
     })();
   }, []);
+
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   const searchMoviesFunction = async (searchText: string) => {
     navigation.navigate('Search', {searchText: searchText});
@@ -120,24 +124,55 @@ const HomeScreen = ({navigation}: any) => {
       </View>
 
       <CategoryHeader title="Now Playing" />
-      <FlatList
+      <Animated.FlatList
         horizontal={true}
         data={nowPlayingList}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.containerGap}
-        renderItem={({item, index}: {item: any; index: number}) => (
-          <SubMovieCard
-            shouldMarginatedatEnd={true}
-            cardFunction={() => {
-              navigation.push('MovieDetails', {movieId: item.id});
-            }}
-            cardWidth={width / 3}
-            isFirst={index === 0 ? true : false}
-            isLast={index === nowPlayingList?.length - 1 ? true : false}
-            title={item.original_title}
-            image={baseImageUrl('w342', item.poster_path)}
-          />
+        contentContainerStyle={styles.nowPlayContainer}
+        bounces={false}
+        decelerationRate={0}
+        snapToInterval={width * 0.7}
+        onScroll={Animated.event(
+          [{nativeEvent: {contentOffset: {x: scrollX}}}],
+          {useNativeDriver: true},
         )}
+        scrollEventThrottle={16}
+        renderItem={({item, index}: {item: any; index: number}) => {
+          if (!item.original_title) {
+            return (
+              <View
+                style={{width: (width - (width * 0.7)) / 2}}
+              />
+            );
+          }
+          const inputRange = [
+            (index - 2) * (width * 0.7),
+            (index - 1) * (width * 0.7),
+            (index) * (width * 0.7),
+          ];
+          const scale = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.75, 1, 0.75],
+            extrapolate: 'clamp',
+          });
+          return (
+            <MovieCard
+              shouldMarginatedatEnd={true}
+              cardFunction={() => {
+                navigation.push('MovieDetail', {movieId: item.id});
+              }}
+              cardWidth={width * 0.7}
+              isFirst={index === 0 ? true : false}
+              isLast={index === nowPlayingList?.length - 1 ? true : false}
+              title={item.original_title}
+              image={baseImageUrl('w780', item.poster_path)}
+              genres={item.genre_ids.slice(1, 4)}
+              voteAverage={item.vote_average}
+              voteCount={item.vote_count}
+              scale={scale}
+            />
+          );
+        }}
       />
 
       <CategoryHeader title="Popular" />
@@ -150,7 +185,7 @@ const HomeScreen = ({navigation}: any) => {
           <SubMovieCard
             shouldMarginatedatEnd={true}
             cardFunction={() => {
-              navigation.push('MovieDetails', {movieId: item.id});
+              navigation.push('MovieDetail', {movieId: item.id});
             }}
             cardWidth={width / 3}
             isFirst={index === 0 ? true : false}
@@ -171,7 +206,7 @@ const HomeScreen = ({navigation}: any) => {
           <SubMovieCard
             shouldMarginatedatEnd={true}
             cardFunction={() => {
-              navigation.push('MovieDetails', {movieId: item.id});
+              navigation.push('MovieDetail', {movieId: item.id});
             }}
             cardWidth={width / 3}
             isFirst={index === 0 ? true : false}
@@ -207,7 +242,11 @@ const styles = StyleSheet.create({
   },
 
   containerGap: {
-    gap: spacing.space_36,
+    gap: spacing.space_32,
+  },
+
+  nowPlayContainer: {
+    alignItems: 'center',
   },
 });
 
