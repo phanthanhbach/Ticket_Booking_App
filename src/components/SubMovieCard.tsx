@@ -5,7 +5,7 @@ import {borderRadius, colors, fontfamily, fontsize, spacing} from '../themes/the
 const SubMovieCard = (props: any) => {
   console.log(props.image);
   return (
-    <TouchableOpacity onPress={() => {}}>
+    <TouchableOpacity onPress={() => props.cardFunction()}>
       <View
         style={[
           styles.container,
