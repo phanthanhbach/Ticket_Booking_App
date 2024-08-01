@@ -130,6 +130,7 @@ const HomeScreen = ({navigation}: any) => {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.nowPlayContainer}
         bounces={false}
+        showsHorizontalScrollIndicator={false}
         decelerationRate={0}
         snapToInterval={width * 0.7}
         onScroll={Animated.event(
@@ -181,6 +182,7 @@ const HomeScreen = ({navigation}: any) => {
         data={popularMoviesList}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.containerGap}
+        showsHorizontalScrollIndicator={false}
         renderItem={({item, index}: {item: any; index: number}) => (
           <SubMovieCard
             shouldMarginatedatEnd={true}
@@ -202,6 +204,7 @@ const HomeScreen = ({navigation}: any) => {
         data={upcomingMoviesList}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.containerGap}
+        showsHorizontalScrollIndicator={false}
         renderItem={({item, index}: {item: any; index: number}) => (
           <SubMovieCard
             shouldMarginatedatEnd={true}
