@@ -11,7 +11,7 @@ import {baseImageUrl, searchMovies} from '../api/APICall';
 import SubMovieCard from '../components/SubMovieCard';
 import InputHeader from '../components/InputHeader';
 
-const {width, height} = Dimensions.get('screen');
+const {width} = Dimensions.get('screen');
 
 const SearchScreen = ({navigation}: any) => {
   const [searchMoviesList, setSearchMoviesList] = useState([]);
@@ -38,6 +38,7 @@ const SearchScreen = ({navigation}: any) => {
           data={searchMoviesList}
           bounces={false}
           numColumns={2}
+          showsHorizontalScrollIndicator={false}
           ListHeaderComponent={
             <View style={styles.inputHeaderContainer}>
               <InputHeader searchFunction={searchMoviesFunction} />
