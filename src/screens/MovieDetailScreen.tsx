@@ -1,19 +1,29 @@
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   ImageBackground,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {baseImageUrl, movieCredits, movieDetails} from '../api/APICall';
-import {borderRadius, colors, fontfamily, fontsize, spacing} from '../themes/theme';
+import {
+  borderRadius,
+  colors,
+  fontfamily,
+  fontsize,
+  spacing,
+} from '../themes/theme';
 import AppHeader from '../components/AppHeader';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomIcon from '../components/CustomIcon';
+import CategoryHeader from '../components/CategoryHeader';
+import CastCard from '../components/CastCard';
 
 const getMovieDetail = async (movieId: number) => {
   try {
@@ -23,6 +33,19 @@ const getMovieDetail = async (movieId: number) => {
   } catch (error) {
     console.error(
       'Something went wrong with the API getMovieDetail call',
+      error,
+    );
+  }
+};
+
+const getMovieCredits = async (movieId: number) => {
+  try {
+    const response = await fetch(movieCredits(movieId));
+    const json = await response.json();
+    return json;
+  } catch (error) {
+    console.error(
+      'Something went wrong with the API getMovieCredits call',
       error,
     );
   }
@@ -40,8 +63,8 @@ const MoiveDetailScreen = ({navigation, route}: any) => {
     })();
 
     (async () => {
-      const tempMovieCast = await movieCredits(movieId);
-      setMovieCast(tempMovieCast);
+      const tempMovieCast = await getMovieCredits(movieId);
+      setMovieCast(tempMovieCast.cast);
     })();
   }, [movieId]);
 
@@ -102,16 +125,12 @@ const MoiveDetailScreen = ({navigation, route}: any) => {
         </Text>
       </View>
       <View>
-        <Text style={styles.title}>
-          {movie?.original_title}
-        </Text>
+        <Text style={styles.title}>{movie?.original_title}</Text>
         <View style={styles.genresContainer}>
           {movie?.genres.map((item: any) => {
             return (
               <View style={styles.genreBox} key={item.id}>
-                <Text style={styles.genreText}>
-                  {item.name}
-                </Text>
+                <Text style={styles.genreText}>{item.name}</Text>
               </View>
             );
           })}
@@ -122,7 +141,51 @@ const MoiveDetailScreen = ({navigation, route}: any) => {
       </View>
       <View style={styles.infoContainer}>
         <View style={styles.rateContainer}>
-
+          <CustomIcon name="star" style={styles.starIcon} />
+          <Text style={styles.runtimeText}>
+            {movie?.vote_average.toFixed(1)} ({movie?.vote_count})
+          </Text>
+          <Text style={styles.runtimeText}>
+            {movie?.release_date.substring(8, 10)}{' '}
+            {new Date(movie?.release_date).toLocaleString('default', {
+              month: 'long',
+            })}{' '}
+            {movie?.release_date.substring(0, 4)}
+          </Text>
+        </View>
+        <Text style={styles.descriptionText}>{movie?.overview}</Text>
+      </View>
+      <View>
+        <CategoryHeader title="Top Casts" />
+        <FlatList
+          data={movieCast}
+          keyExtractor={(item: any) => item.id}
+          horizontal
+          contentContainerStyle={styles.containerGap}
+          renderItem={({item, index}: any) => (
+            <CastCard
+              shouldMarginatedatEnd={true}
+              cardWidth={70}
+              isFirst={index === 0 ? true : false}
+              isLast={index === movieCast?.length - 1 ? true : false}
+              imagePath={baseImageUrl('w185', item.profile_path)}
+              title={item.original_name}
+              subTitle={item.character}
+            />
+          )}
+        />
+        <View>
+          <TouchableOpacity
+            style={styles.buttonBG}
+            onPress={() => {
+              navigation.push('SeatBooking', {
+                movieId: movieId,
+                bgImage: baseImageUrl('w780', movie?.backdrop_path),
+                posterImage: baseImageUrl('original', movie?.poster_path),
+              });
+            }}>
+            <Text style={styles.buttonText}>Select Seats</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -225,10 +288,44 @@ const styles = StyleSheet.create({
   },
 
   infoContainer: {
-
+    marginHorizontal: spacing.space_24,
   },
   rateContainer: {
+    flexDirection: 'row',
+    gap: spacing.space_10,
+    alignItems: 'center',
+    marginTop: spacing.space_10,
+  },
 
+  starIcon: {
+    fontSize: fontsize.font_20,
+    color: colors.Yellow,
+    alignItems: 'center',
+  },
+  descriptionText: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsLight,
+    fontSize: fontsize.font_14,
+    paddingTop: spacing.space_4,
+  },
+
+  containerGap: {
+    gap: spacing.space_24,
+  },
+
+  buttonBG: {
+    alignItems: 'center',
+    marginVertical: spacing.space_24,
+  },
+
+  buttonText: {
+    borderRadius: borderRadius.radius_25 * 2,
+    paddingHorizontal: spacing.space_24,
+    paddingVertical: spacing.space_10,
+    backgroundColor: colors.Orange,
+    fontFamily: fontfamily.poppinsMedium,
+    fontSize: fontsize.font_14,
+    color: colors.White,
   },
 });
 
