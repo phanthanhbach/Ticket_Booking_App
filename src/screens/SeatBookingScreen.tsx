@@ -1,14 +1,225 @@
-import {StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import {
+  ImageBackground,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, {useState} from 'react';
+import {colors, fontfamily, fontsize, spacing} from '../themes/theme';
+import AppHeader from '../components/AppHeader';
+import LinearGradient from 'react-native-linear-gradient';
+import {timeArray} from '../constants/timeArray';
+import CustomIcon from '../components/CustomIcon';
 
-const SetBookingScreen = () => {
+const generateDate = () => {
+  const date = new Date();
+  const weekDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const tempDate = {
+      date: new Date(date.getTime() + i * 24 * 60 * 60 * 1000).getDate(),
+      day: weekDay[new Date(date.getTime() + i * 24 * 60 * 60 * 1000).getDay()],
+    };
+    weekDays.push(tempDate);
+  }
+  return weekDays;
+};
+
+const generateSeats = () => {
+  const numRow = 8;
+  let numCol = 3;
+  const rowArray = [];
+  let start = 1;
+  let reachNine = false;
+
+  for (let i = 0; i < numRow; i++) {
+    const colArray = [];
+    for (let j = 0; j < numCol; j++) {
+      const seatObject = {
+        number: start,
+        taken: Boolean(Math.round(Math.random())),
+        selected: false,
+      };
+      colArray.push(seatObject);
+      start++;
+    }
+    if (i === 3) {
+      numCol += 2;
+    }
+    if (numCol < 9 && !reachNine) {
+      numCol += 2;
+    } else {
+      reachNine = true;
+      numCol -= 2;
+    }
+    rowArray.push(colArray);
+  }
+  return rowArray;
+};
+
+const SetBookingScreen = ({navigation, route}: any) => {
+  const [dateArray, setDateArray] = useState<any[]>(generateDate());
+  const [selectedDate, setSelectedDate] = useState<any>();
+  const [price, setPrice] = useState<number>(0);
+
+  const [twoDSeatArray, setTwoDSeatArray] = useState<any[][]>(generateSeats());
+  const [selectedSeatArray, setSelectedSeatArray] = useState([]);
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
+
+  const selectSeat = (rowIndex: number, seatIndex: number, seatNum: number) => {
+    if (!twoDSeatArray[rowIndex][seatIndex].taken) {
+      const array: any = [...selectedSeatArray];
+      const temp = [...twoDSeatArray];
+      temp[rowIndex][seatIndex].selected = !temp[rowIndex][seatIndex].selected;
+      if (!array.includes(seatNum)) {
+        array.push(seatNum);
+        setSelectedSeatArray(array);
+      } else {
+        const tempIndex = array.indexOf(seatNum);
+        if (tempIndex > -1) {
+          array.splice(tempIndex, 1);
+          setSelectedSeatArray(array);
+        }
+        setPrice(array.length * 5.0);
+        setTwoDSeatArray(temp);
+      }
+    }
+  };
+
   return (
-    <View>
-      <Text>HomeScreen</Text>
-    </View>
+    <ScrollView
+      style={styles.container}
+      bounces={false}
+      showsVerticalScrollIndicator={false}>
+      <StatusBar hidden />
+      <View>
+        <ImageBackground
+          source={{uri: route.params?.bgImage}}
+          style={styles.imgBG}>
+          <LinearGradient
+            colors={[colors.BlackRGB10, colors.Black]}
+            style={styles.linearGradient}>
+            <View style={styles.appHeaderContainer}>
+              <AppHeader
+                iconName="close"
+                title={''}
+                action={() => navigation.goBack()}
+              />
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+        <Text style={styles.screenText}>Screen this side</Text>
+      </View>
+      <View style={styles.seatContainer}>
+        <View style={styles.containerGap20}>
+          {twoDSeatArray?.map((row, rowIndex) => {
+            return (
+              <View key={rowIndex} style={styles.seatRow}>
+                {row?.map((seat, seatIndex) => {
+                  return (
+                    <TouchableOpacity
+                      key={seat.number}
+                      onPress={() => {
+                        selectSeat(rowIndex, seatIndex, seat.number);
+                      }}>
+                      <CustomIcon
+                        name="seat"
+                        style={[
+                          styles.seatIcon,
+                          seat.taken ? {color: colors.Grey} : {},
+                          seat.selected ? {color: colors.Orange} : {},
+                        ]}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.seatRadioContainer}>
+          <View style={styles.radioContainer}>
+            <CustomIcon name="radio" style={styles.radioIcon} />
+            <Text style={styles.radioText}>Available</Text>
+          </View>
+          <View style={styles.radioContainer}>
+          <CustomIcon name="radio" style={[styles.radioIcon, {color: colors.Grey}]} />
+            <Text style={styles.radioText}>Taken</Text>
+          </View>
+          <View style={styles.radioContainer}>
+            <CustomIcon name="radio" style={[styles.radioIcon, {color: colors.Orange}]} />
+            <Text style={styles.radioText}>Selected</Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    flex: 1,
+    backgroundColor: colors.Black,
+  },
+
+  imgBG: {
+    width: '100%',
+    aspectRatio: 3072 / 1727,
+  },
+  linearGradient: {
+    height: '100%',
+  },
+  appHeaderContainer: {
+    marginHorizontal: spacing.space_36,
+    marginTop: spacing.space_20 * 2,
+  },
+
+  screenText: {
+    textAlign: 'center',
+    fontFamily: fontfamily.poppinsRegular,
+    fontSize: fontsize.font_12,
+    color: colors.WhiteRGBA15,
+  },
+
+  seatContainer: {
+    marginVertical: spacing.space_20,
+  },
+  containerGap20: {
+    gap: spacing.space_20,
+  },
+  seatRow: {
+    flexDirection: 'row',
+    gap: spacing.space_20,
+    justifyContent: 'center',
+  },
+  seatIcon: {
+    color: colors.White,
+    fontSize: fontsize.font_24,
+  },
+  seatRadioContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginVertical: spacing.space_20,
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    gap: spacing.space_10,
+    alignItems: 'center',
+  },
+  radioIcon: {
+    color: colors.White,
+    fontSize: fontsize.font_20,
+  },
+  radioText: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsMedium,
+    fontSize: fontsize.font_12,
+  },
+});
 
 export default SetBookingScreen;
