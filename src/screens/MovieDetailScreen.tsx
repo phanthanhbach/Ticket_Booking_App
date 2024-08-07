@@ -179,7 +179,6 @@ const MoiveDetailScreen = ({navigation, route}: any) => {
             style={styles.buttonBG}
             onPress={() => {
               navigation.push('SeatBooking', {
-                movieId: movieId,
                 bgImage: baseImageUrl('w780', movie?.backdrop_path),
                 posterImage: baseImageUrl('original', movie?.poster_path),
               });
