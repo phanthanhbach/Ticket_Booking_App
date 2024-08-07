@@ -1,4 +1,5 @@
 import {
+  FlatList,
   ImageBackground,
   ScrollView,
   StatusBar,
@@ -8,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import React, {useState} from 'react';
-import {colors, fontfamily, fontsize, spacing} from '../themes/theme';
+import {borderRadius, colors, fontfamily, fontsize, spacing} from '../themes/theme';
 import AppHeader from '../components/AppHeader';
 import LinearGradient from 'react-native-linear-gradient';
 import {timeArray} from '../constants/timeArray';
@@ -62,7 +63,7 @@ const generateSeats = () => {
 
 const SetBookingScreen = ({navigation, route}: any) => {
   const [dateArray, setDateArray] = useState<any[]>(generateDate());
-  const [selectedDate, setSelectedDate] = useState<any>();
+  const [selectedDateIndex, setSelectedDateIndex] = useState<any>();
   const [price, setPrice] = useState<number>(0);
 
   const [twoDSeatArray, setTwoDSeatArray] = useState<any[][]>(generateSeats());
@@ -71,7 +72,7 @@ const SetBookingScreen = ({navigation, route}: any) => {
 
   const selectSeat = (rowIndex: number, seatIndex: number, seatNum: number) => {
     if (!twoDSeatArray[rowIndex][seatIndex].taken) {
-      const array: any = [...selectedSeatArray];
+      const array = [...selectedSeatArray];
       const temp = [...twoDSeatArray];
       temp[rowIndex][seatIndex].selected = !temp[rowIndex][seatIndex].selected;
       if (!array.includes(seatNum)) {
@@ -146,14 +147,80 @@ const SetBookingScreen = ({navigation, route}: any) => {
             <Text style={styles.radioText}>Available</Text>
           </View>
           <View style={styles.radioContainer}>
-          <CustomIcon name="radio" style={[styles.radioIcon, {color: colors.Grey}]} />
+            <CustomIcon
+              name="radio"
+              style={[styles.radioIcon, {color: colors.Grey}]}
+            />
             <Text style={styles.radioText}>Taken</Text>
           </View>
           <View style={styles.radioContainer}>
-            <CustomIcon name="radio" style={[styles.radioIcon, {color: colors.Orange}]} />
+            <CustomIcon
+              name="radio"
+              style={[styles.radioIcon, {color: colors.Orange}]}
+            />
             <Text style={styles.radioText}>Selected</Text>
           </View>
         </View>
+      </View>
+      <View>
+        <FlatList
+          data={dateArray}
+          keyExtractor={item => item.date}
+          horizontal
+          bounces={false}
+          contentContainerStyle={styles.containerGap20}
+          renderItem={({item, index}) => {
+            return (
+              <TouchableOpacity onPress={() => setSelectedDateIndex(index)}>
+                <View
+                  style={[
+                    styles.dateContainer,
+                    index == 0
+                      ? {marginLeft: spacing.space_24}
+                      : index == dateArray.length - 1
+                      ? {marginRight: spacing.space_24}
+                      : {},
+                    index == selectedDateIndex
+                      ? {backgroundColor: colors.Orange}
+                      : {},
+                  ]}>
+                  <Text style={styles.dateText}>{item.date}</Text>
+                  <Text style={styles.dayText}>{item.day}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </View>
+
+      <View style={styles.outterContainer}>
+        <FlatList
+          data={timeArray}
+          keyExtractor={item => item}
+          horizontal
+          bounces={false}
+          contentContainerStyle={styles.containerGap20}
+          renderItem={({item, index}) => {
+            return (
+              <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
+                <View
+                  style={[
+                    styles.timeContainer,
+                    index === 0
+                      ? {marginLeft: spacing.space_24}
+                      : index === dateArray.length - 1
+                      ? {marginRight: spacing.space_24}
+                      : {},
+                    index === selectedTimeIndex
+                      ? {backgroundColor: colors.Orange}
+                      : {},
+                  ]}>
+                  <Text style={styles.timeText}>{item}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
       </View>
     </ScrollView>
   );
@@ -219,6 +286,42 @@ const styles = StyleSheet.create({
     color: colors.White,
     fontFamily: fontfamily.poppinsMedium,
     fontSize: fontsize.font_12,
+  },
+
+  dateContainer: {
+    width: spacing.space_10 * 7,
+    height: spacing.space_10 * 10,
+    borderRadius: spacing.space_10 * 10,
+    backgroundColor: colors.darkGrey,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateText: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsMedium,
+    fontSize: fontsize.font_24,
+  },
+  dayText: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsRegular,
+    fontSize: fontsize.font_12,
+  },
+  outterContainer: {marginVertical: spacing.space_20},
+  timeContainer: {
+    width: spacing.space_20 * 4,
+    paddingVertical: spacing.space_10,
+    paddingHorizontal: spacing.space_10,
+    borderWidth: 1,
+    borderColor: colors.WhiteRGBA50,
+    borderRadius: borderRadius.radius_25,
+    backgroundColor: colors.darkGrey,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeText: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsRegular,
+    fontSize: fontsize.font_14,
   },
 });
 
