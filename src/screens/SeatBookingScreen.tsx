@@ -5,15 +5,23 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useState} from 'react';
-import {borderRadius, colors, fontfamily, fontsize, spacing} from '../themes/theme';
+import {
+  borderRadius,
+  colors,
+  fontfamily,
+  fontsize,
+  spacing,
+} from '../themes/theme';
 import AppHeader from '../components/AppHeader';
 import LinearGradient from 'react-native-linear-gradient';
 import {timeArray} from '../constants/timeArray';
 import CustomIcon from '../components/CustomIcon';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 const generateDate = () => {
   const date = new Date();
@@ -67,7 +75,7 @@ const SetBookingScreen = ({navigation, route}: any) => {
   const [price, setPrice] = useState<number>(0);
 
   const [twoDSeatArray, setTwoDSeatArray] = useState<any[][]>(generateSeats());
-  const [selectedSeatArray, setSelectedSeatArray] = useState([]);
+  const [selectedSeatArray, setSelectedSeatArray] = useState<number[]>([]);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
 
   const selectSeat = (rowIndex: number, seatIndex: number, seatNum: number) => {
@@ -84,9 +92,46 @@ const SetBookingScreen = ({navigation, route}: any) => {
           array.splice(tempIndex, 1);
           setSelectedSeatArray(array);
         }
-        setPrice(array.length * 5.0);
-        setTwoDSeatArray(temp);
       }
+      setPrice(array.length * 5.0);
+      setTwoDSeatArray(temp);
+    }
+  };
+
+  const BookSeats = async () => {
+    if (
+      selectedSeatArray.length !== 0 &&
+      timeArray[selectedTimeIndex] !== undefined &&
+      dateArray[selectedDateIndex] !== undefined
+    ) {
+      try {
+        await EncryptedStorage.setItem(
+          'ticket',
+          JSON.stringify({
+            seatArray: selectedSeatArray,
+            time: timeArray[selectedTimeIndex],
+            date: dateArray[selectedDateIndex],
+            ticketImage: route.params?.posterImage,
+          }),
+        );
+      } catch (error) {
+        console.error(
+          'Something went wrong with the EncryptedStorage setItem',
+          error,
+        );
+      }
+      navigation.navigate('Ticket', {
+        seatArray: selectedSeatArray,
+        time: timeArray[selectedTimeIndex],
+        date: dateArray[selectedDateIndex],
+        ticketImage: route.params?.posterImage,
+      });
+    } else {
+      ToastAndroid.showWithGravity(
+        'Please select Seats, Date and Time',
+        ToastAndroid.SHORT,
+        ToastAndroid.TOP,
+      );
     }
   };
 
@@ -175,12 +220,12 @@ const SetBookingScreen = ({navigation, route}: any) => {
                 <View
                   style={[
                     styles.dateContainer,
-                    index == 0
+                    index === 0
                       ? {marginLeft: spacing.space_24}
-                      : index == dateArray.length - 1
+                      : index === dateArray.length - 1
                       ? {marginRight: spacing.space_24}
                       : {},
-                    index == selectedDateIndex
+                    index === selectedDateIndex
                       ? {backgroundColor: colors.Orange}
                       : {},
                   ]}>
@@ -221,6 +266,15 @@ const SetBookingScreen = ({navigation, route}: any) => {
             );
           }}
         />
+      </View>
+      <View style={styles.bottomContainer}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.totalPriceText}>Total Price</Text>
+          <Text style={styles.price}>$ {price}</Text>
+        </View>
+        <TouchableOpacity style={styles.buyButtonContainer} onPress={BookSeats}>
+          <Text style={styles.buttonText}>Buy Tickets</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -322,6 +376,40 @@ const styles = StyleSheet.create({
     color: colors.White,
     fontFamily: fontfamily.poppinsRegular,
     fontSize: fontsize.font_14,
+  },
+
+  bottomContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.space_36,
+    paddingBottom: spacing.space_24,
+  },
+  priceContainer: {
+    alignItems: 'center',
+  },
+  totalPriceText: {
+    color: colors.Grey,
+    fontFamily: fontfamily.poppinsRegular,
+    fontSize: fontsize.font_14,
+  },
+  price: {
+    color: colors.White,
+    fontFamily: fontfamily.poppinsMedium,
+    fontSize: fontsize.font_24,
+  },
+  buyButtonContainer: {
+    backgroundColor: colors.Orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.radius_25,
+    paddingHorizontal: spacing.space_20,
+    paddingVertical: spacing.space_10,
+  },
+  buttonText: {
+    color: colors.White,
+    paddingHorizontal: spacing.space_20,
+    fontFamily: fontfamily.poppinsMedium,
+    fontSize: fontsize.font_16,
   },
 });
 
